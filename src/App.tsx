@@ -354,6 +354,7 @@ export default function App() {
               </button>
             ))}
           </div>
+          <p className="font-option-note">若设备未安装部分字体，将自动使用相近书写风格字体。</p>
         </section>}
 
         {screen === 'print' && <section className="panel print-area"><h2>Print</h2><p>Use browser print to print fronts/backs with IDs.</p>

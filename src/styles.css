@@ -1,4 +1,4 @@
-@import url('https://fonts.googleapis.com/css2?family=Ma+Shan+Zheng&family=Noto+Sans+SC:wght@400;500;700&family=Noto+Serif+SC:wght@500;700&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Liu+Jian+Mao+Cao&family=Long+Cang&family=Ma+Shan+Zheng&family=Noto+Sans+SC:wght@400;500;700&family=Noto+Serif+SC:wght@500;700&family=ZCOOL+KuaiLe&family=Zhi+Mang+Xing&display=swap');
 
 :root {
   --bg: #f7f1e6;
@@ -257,19 +257,19 @@ td, th { border: 1px solid var(--border); padding: .5rem; }
 }
 
 .hanzi-font-huxiaobo {
-  font-family: '胡晓波香辣体', 'KaiTi', 'STKaiti', 'Noto Serif SC', serif;
+  font-family: '胡晓波香辣体', 'Huxiaobo Xianglati', 'HuxiaoboXiangLaTi', 'ZCOOL KuaiLe', 'KaiTi', 'STKaiti', 'Noto Serif SC', serif;
 }
 
 .hanzi-font-aaManhuajia {
-  font-family: 'Aa漫画家', 'KaiTi', 'STKaiti', 'Noto Serif SC', serif;
+  font-family: 'Aa漫画家', 'AaManHuaJia', 'Aa ManHuaJia', 'Zhi Mang Xing', 'KaiTi', 'STKaiti', 'Noto Serif SC', serif;
 }
 
 .hanzi-font-bananaBrush {
-  font-family: '香蕉宽毛刷灵感体', 'KaiTi', 'STKaiti', 'Noto Serif SC', serif;
+  font-family: '香蕉宽毛刷灵感体', 'XiangJiao KuanMaoShua LingGanTi', 'Liu Jian Mao Cao', 'KaiTi', 'STKaiti', 'Noto Serif SC', serif;
 }
 
 .hanzi-font-zihunJianqi {
-  font-family: '字魂剑气手书', 'KaiTi', 'STKaiti', 'Noto Serif SC', serif;
+  font-family: '字魂剑气手书', 'ZiHun JianQiShouShu', 'Long Cang', 'KaiTi', 'STKaiti', 'Noto Serif SC', serif;
 }
 
 .font-option-grid {
@@ -316,6 +316,12 @@ td, th { border: 1px solid var(--border); padding: .5rem; }
 .font-option-sample {
   font-size: 1.9rem;
   line-height: 1.2;
+}
+
+.font-option-note {
+  margin: 4px 0 0;
+  font-size: 0.78rem;
+  color: var(--muted);
 }
 
 @media (max-width: 680px) {
