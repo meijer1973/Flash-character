@@ -26,5 +26,14 @@ npm run dev
 npm test
 ```
 
+## GitHub Pages
+This repo is configured to deploy with GitHub Actions to:
+- `https://meijer1973.github.io/Flash-character/`
+
+Required repo setting:
+- **Settings → Pages → Source: GitHub Actions**
+
+If the page is still white, open **Actions** and check the latest "Deploy to GitHub Pages" run. A failed build/deploy means Pages is still serving an older artifact.
+
 ## Notes
 If package installation is blocked in your environment, run in a network-enabled node environment.
