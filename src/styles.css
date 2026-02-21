@@ -1,0 +1,21 @@
+body { font-family: sans-serif; margin: 0; background: #f4f5f8; }
+.app { max-width: 1000px; margin: 0 auto; padding: 1rem; }
+nav { display: flex; gap: .5rem; flex-wrap: wrap; }
+button { margin: .25rem; }
+.card { background: white; border-radius: 10px; padding: 1rem; min-height: 200px; }
+textarea { width: 100%; }
+table { width: 100%; border-collapse: collapse; }
+td, th { border: 1px solid #ccc; padding: .35rem; }
+.grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; }
+.print-card { border: 1px dashed #888; padding: 8px; background: #fff; }
+@media print {
+  nav, button, input, textarea, select { display:none !important; }
+  body { background: white; }
+  .print-card { break-inside: avoid; }
+}
+
+.characters-text {
+  font-size: 3rem;
+  line-height: 1.2;
+  font-weight: 700;
+}
