@@ -1,5 +1,13 @@
 export type CardField = 'characters' | 'pinyin' | 'meaning';
 
+export type HanziFontKey =
+  | 'mashanzheng'
+  | 'notoSans'
+  | 'huxiaobo'
+  | 'aaManhuajia'
+  | 'bananaBrush'
+  | 'zihunJianqi';
+
 export interface Card {
   id: string;
   characters: string;
@@ -53,6 +61,7 @@ export interface Settings {
   ttsRate: number;
   ttsPitch: number;
   dedupeImportMode: 'merge' | 'keepBoth';
+  hanziFontKey: HanziFontKey;
 }
 
 export interface SessionCardState {

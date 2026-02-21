@@ -4,7 +4,7 @@ import { db, loadSettings, saveSettings } from './lib/db';
 import { downloadText, makeCard, parseCsv, toCsv } from './lib/io';
 import { defaultSettings, getIntervalHoursForStatus, isFastEligible, nextStatusOnCorrect, statusOnWrong } from './lib/srs';
 import { initializeSession, markCorrect, markWrong, SessionState } from './lib/session';
-import { Card, CardField, Review, Settings } from './lib/types';
+import { Card, CardField, HanziFontKey, Review, Settings } from './lib/types';
 import { seedDemoCardsIfEmpty } from './lib/seed';
 import './styles.css';
 
@@ -20,13 +20,22 @@ const screenLabels: Record<Screen, string> = {
   print: '打印'
 };
 
+const hanziFontOptions: Array<{ key: HanziFontKey; label: string; className: string }> = [
+  { key: 'mashanzheng', label: 'Ma Shan Zheng', className: 'hanzi-font-mashanzheng' },
+  { key: 'notoSans', label: 'Noto Sans SC', className: 'hanzi-font-notoSans' },
+  { key: 'huxiaobo', label: '胡晓波香辣体', className: 'hanzi-font-huxiaobo' },
+  { key: 'aaManhuajia', label: 'Aa漫画家', className: 'hanzi-font-aaManhuajia' },
+  { key: 'bananaBrush', label: '香蕉宽毛刷灵感体', className: 'hanzi-font-bananaBrush' },
+  { key: 'zihunJianqi', label: '字魂剑气手书', className: 'hanzi-font-zihunJianqi' }
+];
+
 function fieldText(card: Card, field: CardField): string {
   return card[field] ?? '';
 }
 
-function splitFields(fields: CardField[], card: Card) {
+function splitFields(fields: CardField[], card: Card, hanziClassName?: string) {
   return fields.map((field) => (
-    <p key={field} className={`field field-${field}`}>
+    <p key={field} className={`field field-${field} ${field === 'characters' ? hanziClassName ?? '' : ''}`.trim()}>
       {fieldText(card, field)}
     </p>
   ));
@@ -57,6 +66,7 @@ export default function App() {
   const progressPercent = sessionTotal ? Math.round((reviewedInSession / sessionTotal) * 100) : 0;
   const accuracyPercent = reviewCount ? Math.round((correctCount / reviewCount) * 100) : 0;
   const backFieldsWithCharacters: CardField[] = ['characters', ...settings.backFields.filter((field) => field !== 'characters')];
+  const selectedHanziFontClass = hanziFontOptions.find((option) => option.key === settings.hanziFontKey)?.className ?? 'hanzi-font-mashanzheng';
 
   async function refreshCards() {
     setCards(await db.cards.toArray());
@@ -280,13 +290,13 @@ export default function App() {
           <div className="progress-bar"><span style={{ width: `${progressPercent}%` }} /></div>
           <div className={`review-card ${showBack ? 'flipped' : ''} ${feedback === 'correct' ? 'feedback-correct' : ''} ${feedback === 'wrong' ? 'feedback-wrong' : ''}`}>
             {!showBack ? <>
-              <div className="review-center">{splitFields(settings.frontFields, activeCard)}</div>
+              <div className="review-center">{splitFields(settings.frontFields, activeCard, selectedHanziFontClass)}</div>
               <div className="review-footer">
                 <p className="subtle">Timer: {(Math.max(0, performance.now() - frontStartedAt) / 1000).toFixed(2)}s</p>
                 <button className="btn btn-primary" onClick={() => { setFlipMs(performance.now() - frontStartedAt); setShowBack(true); }}>Flip (Enter)</button>
               </div>
             </> : <>
-              <div className="review-center">{splitFields(backFieldsWithCharacters, activeCard)}</div>
+              <div className="review-center">{splitFields(backFieldsWithCharacters, activeCard, selectedHanziFontClass)}</div>
               <div className="review-footer">
                 <p className="subtle">Flip time: {(flipMs / 1000).toFixed(2)}s</p>
                 {showFastBadge && <span className="badge">Fast</span>}
@@ -327,6 +337,23 @@ export default function App() {
           </label>
           <label>TTS rate <input type="number" value={settings.ttsRate} step={0.1} onChange={(e) => void updateSettings({ ...settings, ttsRate: Number(e.target.value) })} /></label>
           <label>TTS pitch <input type="number" value={settings.ttsPitch} step={0.1} onChange={(e) => void updateSettings({ ...settings, ttsPitch: Number(e.target.value) })} /></label>
+          <h3>Hanzi Font</h3>
+          <div className="font-option-grid" role="radiogroup" aria-label="Hanzi font">
+            {hanziFontOptions.map((option) => (
+              <button
+                type="button"
+                role="radio"
+                aria-checked={settings.hanziFontKey === option.key}
+                aria-pressed={settings.hanziFontKey === option.key}
+                key={option.key}
+                className={`font-option ${settings.hanziFontKey === option.key ? 'active' : ''}`}
+                onClick={() => void updateSettings({ ...settings, hanziFontKey: option.key })}
+              >
+                <span className="font-option-label">{option.label}</span>
+                <span className={`font-option-sample ${option.className}`}>你好 汉字</span>
+              </button>
+            ))}
+          </div>
         </section>}
 
         {screen === 'print' && <section className="panel print-area"><h2>Print</h2><p>Use browser print to print fronts/backs with IDs.</p>

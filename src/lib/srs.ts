@@ -30,7 +30,8 @@ export const defaultSettings: Settings = {
   },
   ttsRate: 1,
   ttsPitch: 1,
-  dedupeImportMode: 'merge'
+  dedupeImportMode: 'merge',
+  hanziFontKey: 'mashanzheng'
 };
 
 export function isFastEligible(wasWrongThisSession: boolean, flipTimeSec: number, thresholdSec: number): boolean {

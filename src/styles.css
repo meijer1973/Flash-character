@@ -203,7 +203,6 @@ td, th { border: 1px solid var(--border); padding: .5rem; }
 
 .field { margin: 0; }
 .field-characters {
-  font-family: 'Ma Shan Zheng', 'KaiTi', 'STKaiti', 'Noto Serif SC', serif;
   font-size: 3rem;
   line-height: 1.2;
   font-weight: 400;
@@ -247,6 +246,84 @@ td, th { border: 1px solid var(--border); padding: .5rem; }
 .btn-secondary { background: rgba(143, 104, 73, 0.12); color: var(--text); border: 1px solid var(--border); }
 
 .action-row { display: flex; flex-wrap: wrap; gap: 8px; }
+
+
+.hanzi-font-mashanzheng {
+  font-family: 'Ma Shan Zheng', 'KaiTi', 'STKaiti', 'Noto Serif SC', serif;
+}
+
+.hanzi-font-notoSans {
+  font-family: 'Noto Sans SC', 'PingFang SC', 'Microsoft YaHei', sans-serif;
+}
+
+.hanzi-font-huxiaobo {
+  font-family: '胡晓波香辣体', 'KaiTi', 'STKaiti', 'Noto Serif SC', serif;
+}
+
+.hanzi-font-aaManhuajia {
+  font-family: 'Aa漫画家', 'KaiTi', 'STKaiti', 'Noto Serif SC', serif;
+}
+
+.hanzi-font-bananaBrush {
+  font-family: '香蕉宽毛刷灵感体', 'KaiTi', 'STKaiti', 'Noto Serif SC', serif;
+}
+
+.hanzi-font-zihunJianqi {
+  font-family: '字魂剑气手书', 'KaiTi', 'STKaiti', 'Noto Serif SC', serif;
+}
+
+.font-option-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 10px;
+}
+
+.font-option {
+  border: 1px solid var(--border);
+  background: rgba(255, 255, 255, 0.35);
+  border-radius: 12px;
+  padding: 10px;
+  display: grid;
+  gap: 8px;
+  text-align: left;
+  color: var(--text);
+  cursor: pointer;
+  transition: border-color 0.2s ease, background-color 0.2s ease, transform 0.08s ease;
+}
+
+.font-option:hover,
+.font-option:focus-visible {
+  border-color: var(--primary);
+  background: rgba(197, 58, 45, 0.08);
+  outline: none;
+}
+
+.font-option:active {
+  transform: translateY(1px);
+}
+
+.font-option.active {
+  border-color: var(--primary);
+  box-shadow: 0 0 0 2px rgba(197, 58, 45, 0.2);
+  background: rgba(197, 58, 45, 0.1);
+}
+
+.font-option-label {
+  font-size: 0.82rem;
+  color: var(--muted);
+}
+
+.font-option-sample {
+  font-size: 1.9rem;
+  line-height: 1.2;
+}
+
+@media (max-width: 680px) {
+  .font-option-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
 .stats-grid {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
