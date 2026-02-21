@@ -279,17 +279,21 @@ export default function App() {
           <div className="progress-bar"><span style={{ width: `${progressPercent}%` }} /></div>
           <div className={`review-card ${showBack ? 'flipped' : ''} ${feedback === 'correct' ? 'feedback-correct' : ''} ${feedback === 'wrong' ? 'feedback-wrong' : ''}`}>
             {!showBack ? <>
-              {splitFields(settings.frontFields, activeCard)}
-              <p className="subtle">Timer: {(Math.max(0, performance.now() - frontStartedAt) / 1000).toFixed(2)}s</p>
-              <button className="btn btn-primary" onClick={() => { setFlipMs(performance.now() - frontStartedAt); setShowBack(true); }}>Flip (Enter)</button>
+              <div className="review-center">{splitFields(settings.frontFields, activeCard)}</div>
+              <div className="review-footer">
+                <p className="subtle">Timer: {(Math.max(0, performance.now() - frontStartedAt) / 1000).toFixed(2)}s</p>
+                <button className="btn btn-primary" onClick={() => { setFlipMs(performance.now() - frontStartedAt); setShowBack(true); }}>Flip (Enter)</button>
+              </div>
             </> : <>
-              {splitFields(settings.backFields, activeCard)}
-              <p className="subtle">Flip time: {(flipMs / 1000).toFixed(2)}s</p>
-              {showFastBadge && <span className="badge">Fast</span>}
-              <div className="action-row">
-                <button className="btn btn-primary" onClick={() => void handleGrade(true)}>Correct (Space)</button>
-                <button className="btn btn-danger" onClick={() => void handleGrade(false)}>Wrong (V)</button>
-                <button className="btn btn-secondary" onClick={() => pronounce(activeCard)}>🔊 Pronounce</button>
+              <div className="review-center">{splitFields(settings.backFields, activeCard)}</div>
+              <div className="review-footer">
+                <p className="subtle">Flip time: {(flipMs / 1000).toFixed(2)}s</p>
+                {showFastBadge && <span className="badge">Fast</span>}
+                <div className="action-row">
+                  <button className="btn btn-primary" onClick={() => void handleGrade(true)}>Correct (Space)</button>
+                  <button className="btn btn-danger" onClick={() => void handleGrade(false)}>Wrong (V)</button>
+                  <button className="btn btn-secondary" onClick={() => pronounce(activeCard)}>🔊 Pronounce</button>
+                </div>
               </div>
             </>}
           </div>

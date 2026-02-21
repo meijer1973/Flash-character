@@ -151,8 +151,9 @@ td, th { border: 1px solid var(--border); padding: .5rem; }
   border: 2px solid var(--border);
   border-radius: 16px;
   padding: 24px;
-  min-height: 270px;
+  min-height: 420px;
   display: grid;
+  grid-template-rows: 1fr auto;
   gap: 10px;
   position: relative;
   overflow: hidden;
@@ -178,6 +179,27 @@ td, th { border: 1px solid var(--border); padding: .5rem; }
 .review-card.flipped { transform: translateY(-1px); }
 .review-card.feedback-correct { border-color: #2f8f57; box-shadow: 0 0 0 4px rgba(47, 143, 87, 0.18); }
 .review-card.feedback-wrong { border-color: #b23b31; box-shadow: 0 0 0 4px rgba(178, 59, 49, 0.18); }
+
+
+.review-center {
+  min-height: 280px;
+  display: grid;
+  place-items: center;
+  align-content: center;
+  text-align: center;
+  gap: 10px;
+}
+
+.review-footer {
+  display: grid;
+  gap: 8px;
+}
+
+.review-center .field-characters {
+  font-size: clamp(5rem, 14vw, 10rem);
+  line-height: 1;
+  text-align: center;
+}
 
 .field { margin: 0; }
 .field-characters {
