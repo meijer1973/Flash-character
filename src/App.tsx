@@ -11,6 +11,15 @@ import './styles.css';
 type Screen = 'home' | 'review' | 'cards' | 'import' | 'settings' | 'print';
 type ReviewFeedback = 'correct' | 'wrong' | null;
 
+const screenLabels: Record<Screen, string> = {
+  home: '首页',
+  review: '复习',
+  cards: '卡片',
+  import: '导入',
+  settings: '设置',
+  print: '打印'
+};
+
 function fieldText(card: Card, field: CardField): string {
   return card[field] ?? '';
 }
@@ -232,7 +241,20 @@ export default function App() {
               {theme === 'light' ? '🌙 Dark' : '☀️ Light'}
             </button>
           </div>
-          <nav>{(['home', 'review', 'cards', 'import', 'settings', 'print'] as Screen[]).map((s) => <button className="btn btn-secondary" key={s} onClick={() => setScreen(s)}>{s}</button>)}</nav>
+          <nav className="tabbar" role="tablist" aria-label="主导航">
+            {(['home', 'review', 'cards', 'import', 'settings', 'print'] as Screen[]).map((s) => (
+              <button
+                key={s}
+                role="tab"
+                aria-selected={screen === s}
+                aria-current={screen === s ? 'page' : undefined}
+                className={`tab ${screen === s ? 'active' : ''}`}
+                onClick={() => setScreen(s)}
+              >
+                {screenLabels[s]}
+              </button>
+            ))}
+          </nav>
         </header>
 
 
@@ -303,7 +325,7 @@ export default function App() {
         </section>}
 
         {screen === 'print' && <section className="panel print-area"><h2>Print</h2><p>Use browser print to print fronts/backs with IDs.</p>
-          <div className="grid">{cards.map((c) => <div className="print-card" key={c.id}><small>{c.id.slice(0, 8)}</small><strong>{c.characters}</strong><div>{c.pinyin}</div><div>{c.meaning}</div></div>)}</div>
+          <div className="grid">{cards.map((c) => <div className="print-card" key={c.id}><small className="print-id">{c.id.slice(0, 8)}</small><strong className="print-characters">{c.characters}</strong><div className="print-pinyin">{c.pinyin}</div><div className="print-meaning">{c.meaning}</div></div>)}</div>
         </section>}
       </div>
     </div>
