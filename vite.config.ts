@@ -3,5 +3,8 @@ import react from '@vitejs/plugin-react';
 
 export default defineConfig({
   plugins: [react()],
-  base: '/Flash-character/'
+  base: '/Flash-character/',
+  test: {
+    environment: 'jsdom'
+  }
 });
