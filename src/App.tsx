@@ -5,6 +5,7 @@ import { downloadText, makeCard, parseCsv, toCsv } from './lib/io';
 import { defaultSettings, getIntervalHoursForStatus, isFastEligible, nextStatusOnCorrect, statusOnWrong } from './lib/srs';
 import { initializeSession, markCorrect, markWrong, SessionState } from './lib/session';
 import { Card, CardField, Review, Settings } from './lib/types';
+import { seedDemoCardsIfEmpty } from './lib/seed';
 import './styles.css';
 
 type Screen = 'home' | 'review' | 'cards' | 'import' | 'settings' | 'print';
@@ -39,6 +40,7 @@ export default function App() {
   const [feedback, setFeedback] = useState<ReviewFeedback>(null);
   const [showFastBadge, setShowFastBadge] = useState(false);
   const [theme, setTheme] = useState<'light' | 'dark'>(() => (localStorage.getItem('theme') === 'dark' ? 'dark' : 'light'));
+  const [demoSeeded, setDemoSeeded] = useState(false);
 
   const dueCards = useMemo(() => cards.filter((c) => new Date(c.dueAt) <= new Date()), [cards]);
   const activeCard = session?.queue[0] ? cards.find((c) => c.id === session.queue[0]) : undefined;
@@ -65,6 +67,8 @@ export default function App() {
 
   useEffect(() => {
     void (async () => {
+      const seeded = await seedDemoCardsIfEmpty();
+      setDemoSeeded(seeded);
       setSettings(await loadSettings());
       await refreshCards();
       await refreshStats();
@@ -230,6 +234,9 @@ export default function App() {
           </div>
           <nav>{(['home', 'review', 'cards', 'import', 'settings', 'print'] as Screen[]).map((s) => <button className="btn btn-secondary" key={s} onClick={() => setScreen(s)}>{s}</button>)}</nav>
         </header>
+
+
+        {demoSeeded && <div className="seed-banner">Demo deck loaded. You can delete it anytime.</div>}
 
         {screen === 'home' && <section className="panel"><h2>Dashboard</h2>
           <div className="stats-grid">

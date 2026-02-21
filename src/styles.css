@@ -39,6 +39,15 @@ body {
 .header-actions { justify-self: end; }
 nav { display: flex; flex-wrap: wrap; gap: 8px; }
 
+.seed-banner {
+  border: 1px solid var(--border);
+  border-left: 4px solid #22c55e;
+  border-radius: 10px;
+  padding: 10px 12px;
+  background: rgba(34, 197, 94, 0.08);
+  color: var(--text);
+}
+
 .panel {
   background: var(--panel);
   border: 1px solid var(--border);
