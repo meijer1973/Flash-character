@@ -13,3 +13,9 @@ td, th { border: 1px solid #ccc; padding: .35rem; }
   body { background: white; }
   .print-card { break-inside: avoid; }
 }
+
+.characters-text {
+  font-size: 3rem;
+  line-height: 1.2;
+  font-weight: 700;
+}

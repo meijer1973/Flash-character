@@ -183,11 +183,11 @@ export default function App() {
       {screen === 'home' && <section><h2>Dashboard</h2><p>Total: {cards.length}</p><p>Due: {dueCards.length}</p><button onClick={beginReview} disabled={!dueCards.length}>Start Review</button></section>}
 
       {screen === 'review' && <section><h2>Review</h2>{activeCard ? <div className="card"><p>Queue left: {session?.queue.length}</p>{!showBack ? <>
-            {settings.frontFields.map((f) => <div key={f}>{fieldText(activeCard, f)}</div>)}
+            {settings.frontFields.map((f) => <div key={f} className={f === 'characters' ? 'characters-text' : ''}>{fieldText(activeCard, f)}</div>)}
             <p>Timer: {(Math.max(0, performance.now() - frontStartedAt) / 1000).toFixed(2)}s</p>
             <button onClick={() => { setFlipMs(performance.now() - frontStartedAt); setShowBack(true); }}>Flip (Enter)</button>
           </> : <>
-            {settings.backFields.map((f) => <div key={f}>{fieldText(activeCard, f)}</div>)}
+            {settings.backFields.map((f) => <div key={f} className={f === 'characters' ? 'characters-text' : ''}>{fieldText(activeCard, f)}</div>)}
             <p>Flip time: {(flipMs / 1000).toFixed(2)}s</p>
             <button onClick={() => void handleGrade(true)}>Correct (Space)</button>
             <button onClick={() => void handleGrade(false)}>Wrong (V)</button>
