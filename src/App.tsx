@@ -56,6 +56,7 @@ export default function App() {
   const reviewedInSession = sessionTotal - (session?.queue.length ?? sessionTotal);
   const progressPercent = sessionTotal ? Math.round((reviewedInSession / sessionTotal) * 100) : 0;
   const accuracyPercent = reviewCount ? Math.round((correctCount / reviewCount) * 100) : 0;
+  const backFieldsWithCharacters: CardField[] = ['characters', ...settings.backFields.filter((field) => field !== 'characters')];
 
   async function refreshCards() {
     setCards(await db.cards.toArray());
@@ -285,7 +286,7 @@ export default function App() {
                 <button className="btn btn-primary" onClick={() => { setFlipMs(performance.now() - frontStartedAt); setShowBack(true); }}>Flip (Enter)</button>
               </div>
             </> : <>
-              <div className="review-center">{splitFields(settings.backFields, activeCard)}</div>
+              <div className="review-center">{splitFields(backFieldsWithCharacters, activeCard)}</div>
               <div className="review-footer">
                 <p className="subtle">Flip time: {(flipMs / 1000).toFixed(2)}s</p>
                 {showFastBadge && <span className="badge">Fast</span>}
