@@ -8,9 +8,18 @@ import { Card, CardField, Review, Settings } from './lib/types';
 import './styles.css';
 
 type Screen = 'home' | 'review' | 'cards' | 'import' | 'settings' | 'print';
+type ReviewFeedback = 'correct' | 'wrong' | null;
 
 function fieldText(card: Card, field: CardField): string {
   return card[field] ?? '';
+}
+
+function splitFields(fields: CardField[], card: Card) {
+  return fields.map((field) => (
+    <p key={field} className={`field field-${field}`}>
+      {fieldText(card, field)}
+    </p>
+  ));
 }
 
 export default function App() {
@@ -18,29 +27,60 @@ export default function App() {
   const [cards, setCards] = useState<Card[]>([]);
   const [settings, setSettings] = useState<Settings>(defaultSettings);
   const [session, setSession] = useState<SessionState | null>(null);
+  const [sessionTotal, setSessionTotal] = useState(0);
   const [showBack, setShowBack] = useState(false);
   const [frontStartedAt, setFrontStartedAt] = useState<number>(0);
   const [flipMs, setFlipMs] = useState(0);
   const [search, setSearch] = useState('');
   const [importText, setImportText] = useState('');
-  const dueCards = useMemo(() => cards.filter((c) => new Date(c.dueAt) <= new Date()), [cards]);
+  const [reviewCount, setReviewCount] = useState(0);
+  const [correctCount, setCorrectCount] = useState(0);
+  const [bestStreak, setBestStreak] = useState(0);
+  const [feedback, setFeedback] = useState<ReviewFeedback>(null);
+  const [showFastBadge, setShowFastBadge] = useState(false);
+  const [theme, setTheme] = useState<'light' | 'dark'>(() => (localStorage.getItem('theme') === 'dark' ? 'dark' : 'light'));
 
+  const dueCards = useMemo(() => cards.filter((c) => new Date(c.dueAt) <= new Date()), [cards]);
   const activeCard = session?.queue[0] ? cards.find((c) => c.id === session.queue[0]) : undefined;
+  const reviewedInSession = sessionTotal - (session?.queue.length ?? sessionTotal);
+  const progressPercent = sessionTotal ? Math.round((reviewedInSession / sessionTotal) * 100) : 0;
+  const accuracyPercent = reviewCount ? Math.round((correctCount / reviewCount) * 100) : 0;
 
   async function refreshCards() {
     setCards(await db.cards.toArray());
+  }
+
+  async function refreshStats() {
+    const reviews = await db.reviews.toArray();
+    setReviewCount(reviews.length);
+    setCorrectCount(reviews.filter((r) => r.resultType === 'correct').length);
+    let running = 0;
+    let max = 0;
+    for (const review of reviews.sort((a, b) => a.reviewedAt.localeCompare(b.reviewedAt))) {
+      running = review.resultType === 'correct' ? running + 1 : 0;
+      max = Math.max(max, running);
+    }
+    setBestStreak(max);
   }
 
   useEffect(() => {
     void (async () => {
       setSettings(await loadSettings());
       await refreshCards();
+      await refreshStats();
     })();
   }, []);
 
   useEffect(() => {
+    document.documentElement.setAttribute('data-theme', theme);
+    localStorage.setItem('theme', theme);
+  }, [theme]);
+
+  useEffect(() => {
     if (activeCard && !showBack) {
       setFrontStartedAt(performance.now());
+      setFeedback(null);
+      setShowFastBadge(false);
     }
   }, [activeCard?.id, showBack]);
 
@@ -61,9 +101,10 @@ export default function App() {
     return () => window.removeEventListener('keydown', onKey);
   }, [screen, activeCard, showBack, frontStartedAt, session, cards, settings]);
 
-  async function beginReview() {
+  function beginReview() {
     const nowDue = cards.filter((c) => new Date(c.dueAt) <= new Date());
     setSession(initializeSession(nowDue));
+    setSessionTotal(nowDue.length);
     setShowBack(false);
     setScreen('review');
   }
@@ -101,6 +142,9 @@ export default function App() {
 
     const nextSession = correct ? markCorrect(session, activeCard.id) : markWrong(session, activeCard.id);
     setSession(nextSession);
+    setFeedback(correct ? 'correct' : 'wrong');
+    setShowFastBadge(correct && fastEligible);
+
     await db.cards.put(updated);
 
     const review: Review = {
@@ -116,6 +160,7 @@ export default function App() {
     };
     await db.reviews.add(review);
     await refreshCards();
+    await refreshStats();
 
     setShowBack(false);
     if (nextSession.queue.length === 0) {
@@ -174,83 +219,86 @@ export default function App() {
   const filteredCards = cards.filter((c) => `${c.characters} ${c.pinyin ?? ''} ${c.meaning}`.toLowerCase().includes(search.toLowerCase()));
 
   return (
-    <div className="app">
-      <header>
-        <h1>Flash Character SRS</h1>
-        <nav>{(['home', 'review', 'cards', 'import', 'settings', 'print'] as Screen[]).map((s) => <button key={s} onClick={() => setScreen(s)}>{s}</button>)}</nav>
-      </header>
+    <div className="app-shell">
+      <div className="app-container">
+        <header className="app-header">
+          <h1>Flash Character SRS</h1>
+          <div className="header-actions">
+            <button className="btn btn-secondary" onClick={() => setTheme(theme === 'light' ? 'dark' : 'light')}>
+              {theme === 'light' ? '🌙 Dark' : '☀️ Light'}
+            </button>
+          </div>
+          <nav>{(['home', 'review', 'cards', 'import', 'settings', 'print'] as Screen[]).map((s) => <button className="btn btn-secondary" key={s} onClick={() => setScreen(s)}>{s}</button>)}</nav>
+        </header>
 
-      {screen === 'home' && <section><h2>Dashboard</h2><p>Total: {cards.length}</p><p>Due: {dueCards.length}</p><button onClick={beginReview} disabled={!dueCards.length}>Start Review</button></section>}
+        {screen === 'home' && <section className="panel"><h2>Dashboard</h2>
+          <div className="stats-grid">
+            <div><span>Total cards</span><strong>{cards.length}</strong></div>
+            <div><span>Due now</span><strong>{dueCards.length}</strong></div>
+            <div><span>Accuracy</span><strong>{accuracyPercent}%</strong></div>
+            <div><span>Total reviews</span><strong>{reviewCount}</strong></div>
+            <div><span>Best streak</span><strong>{bestStreak}</strong></div>
+          </div>
+          <button className="btn btn-primary" onClick={beginReview} disabled={!dueCards.length}>Start Review</button>
+        </section>}
 
-      {screen === 'review' && <section><h2>Review</h2>{activeCard ? <div className="card"><p>Queue left: {session?.queue.length}</p>{!showBack ? <>
-            {settings.frontFields.map((f) => <div key={f} className={f === 'characters' ? 'characters-text' : ''}>{fieldText(activeCard, f)}</div>)}
-            <p>Timer: {(Math.max(0, performance.now() - frontStartedAt) / 1000).toFixed(2)}s</p>
-            <button onClick={() => { setFlipMs(performance.now() - frontStartedAt); setShowBack(true); }}>Flip (Enter)</button>
-          </> : <>
-            {settings.backFields.map((f) => <div key={f} className={f === 'characters' ? 'characters-text' : ''}>{fieldText(activeCard, f)}</div>)}
-            <p>Flip time: {(flipMs / 1000).toFixed(2)}s</p>
-            <button onClick={() => void handleGrade(true)}>Correct (Space)</button>
-            <button onClick={() => void handleGrade(false)}>Wrong (V)</button>
-            <button onClick={() => pronounce(activeCard)}>🔊 Pronounce</button>
-          </>}</div> : <p>No active card.</p>}</section>}
+        {screen === 'review' && <section className="panel"><h2>Review</h2>{activeCard ? <>
+          <div className="progress-head">
+            <p>Card {Math.min(reviewedInSession + 1, sessionTotal)} of {sessionTotal}</p>
+            <p>{session?.queue.length ?? 0} remaining</p>
+          </div>
+          <div className="progress-bar"><span style={{ width: `${progressPercent}%` }} /></div>
+          <div className={`review-card ${showBack ? 'flipped' : ''} ${feedback === 'correct' ? 'feedback-correct' : ''} ${feedback === 'wrong' ? 'feedback-wrong' : ''}`}>
+            {!showBack ? <>
+              {splitFields(settings.frontFields, activeCard)}
+              <p className="subtle">Timer: {(Math.max(0, performance.now() - frontStartedAt) / 1000).toFixed(2)}s</p>
+              <button className="btn btn-primary" onClick={() => { setFlipMs(performance.now() - frontStartedAt); setShowBack(true); }}>Flip (Enter)</button>
+            </> : <>
+              {splitFields(settings.backFields, activeCard)}
+              <p className="subtle">Flip time: {(flipMs / 1000).toFixed(2)}s</p>
+              {showFastBadge && <span className="badge">Fast</span>}
+              <div className="action-row">
+                <button className="btn btn-primary" onClick={() => void handleGrade(true)}>Correct (Space)</button>
+                <button className="btn btn-danger" onClick={() => void handleGrade(false)}>Wrong (V)</button>
+                <button className="btn btn-secondary" onClick={() => pronounce(activeCard)}>🔊 Pronounce</button>
+              </div>
+            </>}
+          </div>
+        </> : <p>No active card.</p>}</section>}
 
-      {screen === 'cards' && <section><h2>Card Manager</h2><input value={search} onChange={(e) => setSearch(e.target.value)} placeholder="Search" />
-        <table><thead><tr><th>Characters</th><th>Pinyin</th><th>Meaning</th><th>Status</th></tr></thead><tbody>{filteredCards.map((c) => <tr key={c.id}><td>{c.characters}</td><td>{c.pinyin}</td><td>{c.meaning}</td><td>{c.status}</td></tr>)}</tbody></table></section>}
+        {screen === 'cards' && <section className="panel"><h2>Card Manager</h2><input value={search} onChange={(e) => setSearch(e.target.value)} placeholder="Search" />
+          <table><thead><tr><th>Characters</th><th>Pinyin</th><th>Meaning</th><th>Status</th></tr></thead><tbody>{filteredCards.map((c) => <tr key={c.id}><td>{c.characters}</td><td>{c.pinyin}</td><td>{c.meaning}</td><td>{c.status}</td></tr>)}</tbody></table></section>}
 
-      {screen === 'import' && <section><h2>Import / Export</h2><textarea value={importText} onChange={(e) => setImportText(e.target.value)} placeholder="characters,pinyin,meaning" rows={8} />
-        <button onClick={() => void applyImport()}>Import CSV/Paste</button>
-        <button onClick={() => exportCards(false, false)}>Export CSV (all)</button>
-        <button onClick={() => exportCards(true, false)}>Export CSV (due)</button>
-        <button onClick={() => exportCards(false, true)}>Export JSON (all)</button>
-        <button onClick={() => exportCards(true, true)}>Export JSON (due)</button>
-      </section>}
+        {screen === 'import' && <section className="panel"><h2>Import / Export</h2><textarea value={importText} onChange={(e) => setImportText(e.target.value)} placeholder="characters,pinyin,meaning" rows={8} />
+          <div className="action-row">
+            <button className="btn btn-primary" onClick={() => void applyImport()}>Import CSV/Paste</button>
+            <button className="btn btn-secondary" onClick={() => exportCards(false, false)}>Export CSV (all)</button>
+            <button className="btn btn-secondary" onClick={() => exportCards(true, false)}>Export CSV (due)</button>
+            <button className="btn btn-secondary" onClick={() => exportCards(false, true)}>Export JSON (all)</button>
+            <button className="btn btn-secondary" onClick={() => exportCards(true, true)}>Export JSON (due)</button>
+          </div>
+        </section>}
 
-      {screen === 'settings' && <section><h2>Settings</h2>
-        <label>Wrong behavior
-          <select value={settings.wrongBehavior} onChange={(e) => void updateSettings({ ...settings, wrongBehavior: e.target.value as Settings['wrongBehavior'] })}>
-            <option value="none">No lapse on wrong</option><option value="lapseOne">Lapse one</option><option value="resetZero">Reset to zero</option>
-          </select>
-        </label>
-        <label>Front Fields
-          <input value={settings.frontFields.join(',')} onChange={(e) => void updateSettings({ ...settings, frontFields: e.target.value.split(',').map((v) => v.trim() as CardField).filter(Boolean) })} />
-        </label>
-        <label>Back Fields
-          <input value={settings.backFields.join(',')} onChange={(e) => void updateSettings({ ...settings, backFields: e.target.value.split(',').map((v) => v.trim() as CardField).filter(Boolean) })} />
-        </label>
-        <h3>SRS Steps</h3>
-        <table><thead><tr><th>Step</th><th>Interval(h)</th><th>Threshold(s)</th><th>Slow mode</th></tr></thead><tbody>
-          {settings.steps.map((step, idx) => <tr key={step.step}>
-            <td>{step.step}</td>
-            <td><input type="number" value={step.intervalHours} onChange={(e) => {
-              const copy = [...settings.steps];
-              copy[idx] = { ...step, intervalHours: Number(e.target.value) };
-              void updateSettings({ ...settings, steps: copy });
-            }} /></td>
-            <td><input type="number" value={Number.isFinite(step.speedThresholdSec) ? step.speedThresholdSec : 9999} onChange={(e) => {
-              const copy = [...settings.steps];
-              copy[idx] = { ...step, speedThresholdSec: Number(e.target.value) };
-              void updateSettings({ ...settings, steps: copy });
-            }} /></td>
-            <td><select value={step.slowCorrectCapMode} onChange={(e) => {
-              const copy = [...settings.steps];
-              copy[idx] = { ...step, slowCorrectCapMode: e.target.value as typeof step.slowCorrectCapMode };
-              void updateSettings({ ...settings, steps: copy });
-            }}><option value="stay">stay</option><option value="demoteOne">demoteOne</option><option value="custom">custom</option></select></td>
-          </tr>)}
-        </tbody></table>
-        <h3>Infinite Rule</h3>
-        <label>Start step <input type="number" value={settings.infiniteRule.startStep} onChange={(e) => void updateSettings({ ...settings, infiniteRule: { ...settings.infiniteRule, startStep: Number(e.target.value) } })} /></label>
-        <label>Fast threshold sec <input type="number" value={settings.infiniteRule.fastThresholdSec} onChange={(e) => void updateSettings({ ...settings, infiniteRule: { ...settings.infiniteRule, fastThresholdSec: Number(e.target.value) } })} /></label>
-        <label>Base interval days <input type="number" value={settings.infiniteRule.baseIntervalDays} onChange={(e) => void updateSettings({ ...settings, infiniteRule: { ...settings.infiniteRule, baseIntervalDays: Number(e.target.value) } })} /></label>
-        <label>Growth factor <input type="number" step={0.1} value={settings.infiniteRule.growthFactor} onChange={(e) => void updateSettings({ ...settings, infiniteRule: { ...settings.infiniteRule, growthFactor: Number(e.target.value) } })} /></label>
-        <label>Max interval days <input type="number" value={settings.infiniteRule.maxIntervalDays} onChange={(e) => void updateSettings({ ...settings, infiniteRule: { ...settings.infiniteRule, maxIntervalDays: Number(e.target.value) } })} /></label>
-        <label>TTS rate <input type="number" value={settings.ttsRate} step={0.1} onChange={(e) => void updateSettings({ ...settings, ttsRate: Number(e.target.value) })} /></label>
-        <label>TTS pitch <input type="number" value={settings.ttsPitch} step={0.1} onChange={(e) => void updateSettings({ ...settings, ttsPitch: Number(e.target.value) })} /></label>
-      </section>}
+        {screen === 'settings' && <section className="panel"><h2>Settings</h2>
+          <label>Wrong behavior
+            <select value={settings.wrongBehavior} onChange={(e) => void updateSettings({ ...settings, wrongBehavior: e.target.value as Settings['wrongBehavior'] })}>
+              <option value="none">No lapse on wrong</option><option value="lapseOne">Lapse one</option><option value="resetZero">Reset to zero</option>
+            </select>
+          </label>
+          <label>Front Fields
+            <input value={settings.frontFields.join(',')} onChange={(e) => void updateSettings({ ...settings, frontFields: e.target.value.split(',').map((v) => v.trim() as CardField).filter(Boolean) })} />
+          </label>
+          <label>Back Fields
+            <input value={settings.backFields.join(',')} onChange={(e) => void updateSettings({ ...settings, backFields: e.target.value.split(',').map((v) => v.trim() as CardField).filter(Boolean) })} />
+          </label>
+          <label>TTS rate <input type="number" value={settings.ttsRate} step={0.1} onChange={(e) => void updateSettings({ ...settings, ttsRate: Number(e.target.value) })} /></label>
+          <label>TTS pitch <input type="number" value={settings.ttsPitch} step={0.1} onChange={(e) => void updateSettings({ ...settings, ttsPitch: Number(e.target.value) })} /></label>
+        </section>}
 
-      {screen === 'print' && <section className="print-area"><h2>Print</h2><p>Use browser print to print fronts/backs with IDs.</p>
-        <div className="grid">{cards.map((c) => <div className="print-card" key={c.id}><small>{c.id.slice(0, 8)}</small><strong>{c.characters}</strong><div>{c.pinyin}</div><div>{c.meaning}</div></div>)}</div>
-      </section>}
+        {screen === 'print' && <section className="panel print-area"><h2>Print</h2><p>Use browser print to print fronts/backs with IDs.</p>
+          <div className="grid">{cards.map((c) => <div className="print-card" key={c.id}><small>{c.id.slice(0, 8)}</small><strong>{c.characters}</strong><div>{c.pinyin}</div><div>{c.meaning}</div></div>)}</div>
+        </section>}
+      </div>
     </div>
   );
 }
